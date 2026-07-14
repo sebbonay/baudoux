@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veille Emploi – Lucas Baudoux</title>
+<style>
+  :root {
+    --bg:#f7f4f0; --card:#fff; --primary:#4a0e0e; --wine:#8b1a1a;
+    --teal:#0f766e; --green:#059669; --gold:#b45309; --text:#1e1a17;
+    --muted:#6b5e52; --border:#e5ded6; --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+
+  header{background:linear-gradient(135deg,#3b0a0a,#6b1414 60%,#92400e);color:white;padding:28px 40px;}
+  .header-inner{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+  header h1{font-size:1.6rem;font-weight:800;letter-spacing:-.5px;}
+  header h1 em{color:#fca5a5;font-style:normal;}
+  .updated{font-size:.8rem;opacity:.65;margin-top:3px;}
+  .profile-pill{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:10px 16px;font-size:.78rem;line-height:1.6;max-width:300px;}
+  .profile-pill strong{color:#fca5a5;display:block;margin-bottom:2px;}
+
+  .statsbar{background:white;border-bottom:1px solid var(--border);padding:14px 40px;}
+  .statsbar-inner{max-width:1100px;margin:0 auto;display:flex;gap:32px;align-items:center;flex-wrap:wrap;}
+  .stat{display:flex;align-items:center;gap:8px;}
+  .stat-n{font-size:1.4rem;font-weight:800;}
+  .pill{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+  .filters{max-width:1100px;margin:24px auto 0;padding:0 40px;display:flex;gap:8px;flex-wrap:wrap;}
+  .ftab{padding:7px 18px;border-radius:20px;border:2px solid var(--border);background:white;cursor:pointer;font-size:.82rem;font-weight:700;color:var(--muted);transition:all .15s;}
+  .ftab:hover{border-color:var(--wine);color:var(--wine);}
+  .ftab.active{background:var(--wine);border-color:var(--wine);color:white;}
+  .ftab.f-postule.active{background:#059669;border-color:#059669;}
+  .ftab.f-non.active{background:#94a3b8;border-color:#94a3b8;}
+
+  .grid{max-width:1100px;margin:20px auto 48px;padding:0 40px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;}
+
+  .card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:22px;display:flex;flex-direction:column;gap:12px;transition:transform .2s,box-shadow .2s;position:relative;}
+  .card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(74,14,14,.1);}
+  .card.hidden{display:none;}
+  .card[data-status="postule"]{opacity:.55;}
+  .card[data-status="non"]{opacity:.35;}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0;}
+  .card.cat-prestige::before{background:var(--wine);}
+  .card.cat-account::before{background:var(--teal);}
+  .card.cat-cabinet::before{background:var(--gold);}
+  .card.is-new::after{content:'🔥 Top match';position:absolute;top:14px;right:14px;background:#fee2e2;color:#991b1b;font-size:.68rem;font-weight:800;padding:3px 8px;border-radius:6px;}
+
+  .card-top{display:flex;justify-content:space-between;align-items:center;}
+  .cat-tag{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;padding:3px 9px;border-radius:8px;}
+  .cat-prestige .cat-tag{background:#fee2e2;color:#991b1b;}
+  .cat-account .cat-tag{background:#ccfbf1;color:#0f766e;}
+  .cat-cabinet .cat-tag{background:#fef3c7;color:#92400e;}
+  .compat{font-size:.78rem;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:3px;}
+  .stars{color:var(--gold);letter-spacing:-1px;}
+
+  .card h3{font-size:.97rem;font-weight:800;line-height:1.3;}
+  .company{font-size:.85rem;color:var(--muted);font-weight:600;}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .tag{background:var(--bg);border-radius:6px;padding:3px 9px;font-size:.75rem;color:var(--muted);}
+  .tag.salary{color:var(--green);font-weight:700;background:#f0fdf4;}
+  .tag.hot{color:#991b1b;font-weight:700;background:#fee2e2;}
+  .tag.kedge{color:#7c3aed;font-weight:700;background:#f5f3ff;}
+
+  .match{font-size:.78rem;color:#166534;background:#f0fdf4;border-left:3px solid #86efac;padding:7px 10px;border-radius:0 6px 6px 0;line-height:1.5;}
+  .match.warn{color:#92400e;background:#fffbeb;border-left-color:#fcd34d;}
+
+  .actions{display:flex;gap:8px;margin-top:auto;padding-top:4px;}
+  .btn-apply{flex:1;padding:9px 12px;border:none;border-radius:9px;font-weight:700;font-size:.82rem;cursor:pointer;text-decoration:none;text-align:center;color:white;transition:filter .15s;}
+  .cat-prestige .btn-apply{background:var(--wine);}
+  .cat-account .btn-apply{background:var(--teal);}
+  .cat-cabinet .btn-apply{background:var(--gold);}
+  .btn-apply:hover{filter:brightness(1.12);}
+  .btn-status{padding:9px 12px;border-radius:9px;border:1.5px solid var(--border);background:white;cursor:pointer;font-size:.78rem;font-weight:700;color:var(--muted);transition:all .15s;white-space:nowrap;}
+  .btn-status:hover{border-color:var(--wine);color:var(--wine);}
+  .card[data-status="postule"] .btn-status{background:#f0fdf4;border-color:#86efac;color:var(--green);}
+  .card[data-status="non"]    .btn-status{background:#f8fafc;border-color:#cbd5e1;color:#94a3b8;}
+
+  footer{text-align:center;padding:24px 40px 40px;color:var(--muted);font-size:.78rem;}
+
+  @media(max-width:600px){
+    header,.statsbar,.filters,.grid,footer{padding-left:16px;padding-right:16px;}
+    .grid{grid-template-columns:1fr;}
+    header h1{font-size:1.2rem;}
+    .statsbar-inner{gap:16px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <h1>Veille Emploi — <em>Lucas Baudoux</em></h1>
+      <div class="updated">Mis à jour le 14 juillet 2026 · Cible : France · KAM / Compte Clé tous secteurs</div>
+    </div>
+    <div class="profile-pill">
+      <strong>🍾 Profil</strong>
+      Chef de secteur CHD @ Pernod Ricard · Ex-Hennessy · KEDGE Master 2 Vins &amp; Spiritueux · ~4 ans exp<br>
+      → Cible : KAM / Compte Clé — ouvert tous secteurs FMCG / agro / marketplace
+    </div>
+  </div>
+</header>
+
+<div class="statsbar">
+  <div class="statsbar-inner">
+    <div class="stat">
+      <span class="pill" style="background:#8b1a1a"></span>
+      <span class="stat-n">6</span>
+      <span style="font-size:.82rem;color:var(--muted)">KAM / Compte Clé</span>
+    </div>
+    <div class="stat">
+      <span class="pill" style="background:#0f766e"></span>
+      <span class="stat-n">2</span>
+      <span style="font-size:.82rem;color:var(--muted)">Business Dev / Account</span>
+    </div>
+    <div class="stat">
+      <span class="pill" style="background:#b45309"></span>
+      <span class="stat-n">3</span>
+      <span style="font-size:.82rem;color:var(--muted)">Cabinets spécialisés</span>
+    </div>
+  </div>
+</div>
+
+<div class="filters">
+  <button class="ftab active" data-filter="all">Toutes (11)</button>
+  <button class="ftab" data-filter="prestige">KAM / Compte Clé</button>
+  <button class="ftab" data-filter="account">Business Dev</button>
+  <button class="ftab" data-filter="cabinet">Cabinets</button>
+  <button class="ftab f-postule" data-filter="postule">✓ Postulé</button>
+  <button class="ftab f-non" data-filter="non">✗ Non pertinent</button>
+</div>
+
+<div class="grid" id="grid">
+
+  <!-- ===== KAM / COMPTE CLÉ ===== -->
+
+  <div class="card cat-prestige is-new" data-cat="prestige" data-status="open">
+    <div class="card-top">
+      <span class="cat-tag">KAM / Compte Clé</span>
+      <span class="compat"><span class="stars">★★★★★</span></span>
+    </div>
+    <h3>Key Account Manager F/H – Bordeaux</h3>
+    <div class="company">Cdiscount · Bordeaux (siège) · CDI</div>
+    <div class="tags">
+      <span class="tag hot">Bordeaux ✓</span>
+      <span class="tag">Marketplace / E-commerce</span>
+      <span class="tag">2–5 ans exp.</span>
+      <span class="tag salary">Package cadre</span>
+    </div>
+    <div class="match">✅ Poste KAM chez Cdiscount (groupe Casino, siège Bordeaux) — gestion et développement de comptes marchands sur la marketplace. Exp. e-commerce bienvenue mais pas obligatoire ; compétences commerciales et gestion de comptes sont le cœur. Localisation parfaite pour une relocalisation Bordeaux. 2–5 ans d'exp. = profil Pernod Ricard correspondant.</div>
+    <div class="actions">
+      <a class="btn-apply" href="https://www.welcometothejungle.com/fr/companies/cdiscount/jobs/key-account-manager-f-h_bordeaux-33_CDISC_9px2pGA" target="_blank" rel="noopener">Voir sur WTTJ →</a>
+      <button class="btn-status" onclick="toggleStatus(this)">Marquer postulé</button>
+    </div>
+  </div>
+
+  <div class="card cat-prestige is-new" data-cat="prestige" data-status="open">
+    <div class="card-top">
+      <span class="cat-tag">KAM / Compte Clé</span>
+      <span class="compat"><span class="stars">★★★★★</span></span>
+    </div>
+    <h3>Compte Clé National Junior GMS/GSS H/F</h3>
+    <div class="company">Client confidentiel (Michael Page) · France · CDI</div>
+    <div class="tags">
+      <span class="tag hot">Mandat actif</span>
+      <span class="tag">Comptes nationaux GMS/GSS</span>
+      <span class="tag">3+ ans GMS requis</span>
+      <span class="tag salary">50–60k€ fixe</span>
+      <span class="tag kedge">Bac+5 exigé</span>
+    </div>
+    <div class="match">✅ Poste "junior national" — transition logique après chef de secteur. Gestion des centrales (Carrefour, Système U...), construction de plans d'affaires, coordination trade. 3 ans d'exp. GMS minimum requis : Lucas est dans la cible. Poste national avec potentiel télétravail. Profil KEDGE + Pernod Ricard = dossier solide.</div>
+    <div class="actions">
+      <a class="btn-apply" href="https://www.michaelpage.fr/job-detail/compte-cl%C3%A9-national-junior-gmsgss-hf/ref/jn-092025-6837946" target="_blank" rel="noopener">Voir sur Michael Page →</a>
+      <button class="btn-status" onclick="toggleStatus(this)">Marquer postulé</button>
+    </div>
+  </div>
+
+  <div class="card cat-prestige" data-cat="prestige" data-status="open">
+    <div class="card-top">
+      <span class="cat-tag">KAM / Compte Clé</span>
+      <span class="compat"><span class="stars">★★★★☆</span></span>
+    </div>
+    <h3>Key Account Manager F/H – Alimentaire &amp; Boissons</h3>
+    <div class="company">FastGoodCuisine · Paris · CDI</div>
+    <div class="tags">
+      <span class="tag hot">Offre WTTJ active</span>
+      <span class="tag">Food &amp; Boissons</span>
+      <span class="tag">GMS apprécié</span>
+      <span class="tag">2 ans min.</span>
+    </div>
+    <div class="match">✅ Startup alimentaire en croissance — KAM sur circuits GMS et food service. Exp. en vente GMS pour boissons/alimentaire = fit direct avec parcours Pernod Ricard. 2 ans d'exp. minimum, profil junior-confirmé. Paris ou télétravail partiel possible selon négociation.</div>
+    <div class="actions">
+      <a class="btn-apply" href="https://www.welcometothejungle.com/fr/companies/fgc-company/jobs/key-account-manager-f-h-x-cdi-paris_paris" target="_blank" rel="noopener">Voir sur WTTJ →</a>
+      <button class="btn-status" onclick="toggleStatus(this)">Marquer postulé</button>
+    </div>
+  </div>
+
+  <div class="card cat-prestige" data-cat="prestige" data-status="open">
+    <div class="card-top">
+      <span class="cat-tag">KAM / Compte Clé</span>
+      <span class="compat"><span class="stars">★★★★☆</span></span>
+    </div>
+    <h3>Compte Clé / Key Account Manager KAM H/F</h3>
+    <div class="company">Biofuture · Venelles (13) · CDI</div>
+    <div class="tags">
+      <span class="tag">GSS / GSA</span>
+      <span class="tag">Centrales nationales &amp; régionales</span>
+      <span class="tag">Éco-produits</span>
+      <span class="tag salary">~40–55k€</span>
+    </div>
+    <div class="match">✅ Biofuture (écoproduits ménagers) — poste KAM centré sur la négociation avec centrales GSS nationales et régionales, optimisation de visibilité en magasin. Missions très proches de ce qu'un chef de secteur fait côté terrain mais à l'échelle comptes clés. Venelles (Aix-Marseille) — région accessible. Secteur éco en forte croissance.</div>
+    <div class="actions">
+      <a class="btn-apply" href="https://www.welcometothejungle.com/fr/companies/biofuture/jobs/compte-cle-key-account-manager-kam_venelles" target="_blank" rel="noopener">Voir sur WTTJ →</a>
+      <button class="btn-status" onclick="toggleStatus(this)">Marquer postulé</button>
+    </div>
+  </div>
+
+  <div class="card cat-prestige" data-cat="prestige" data-status="open">
+    <div class="card-top">
+      <span class="cat-tag">KAM / Compte Clé</span>
+      <span class="compat"><span class="stars">★★★★☆</span></span>
+    </div>
+    <h3>KAM National GMS H/F</h3>
+    <div class="company">Client confidentiel (Michael Page) · Avignon (84) · CDI</div>
+    <div class="tags">
+      <span class="tag hot">Offre Michael Page active</span>
+      <span class="tag">~80% GMS France</span>
+      <span class="tag">FMCG / Agroalimentaire</span>
+      <span class="tag salary">Package cadre attractif</span>
+    </div>
+    <div class="match">✅ Poste KAM national avec périmètre ~80% GMS. Base Avignon, déplacements nationaux. Secteur FMCG agroalimentaire — continuité directe du background GMS Pernod Ricard. Négociations avec centrales, plans d'affaires enseignes, coordination trade marketing. Avignon = 1h de Bordeaux en avion ou télétravail partiel possible.</div>
+    <div class="actions">
+      <a class="btn-apply" href="https://www.michaelpage.fr/job-detail/kam-national-gms-hf/ref/jn-052026-7022600" target="_blank" rel="noopener">Voir sur Michael Page →</a>
+      <button class="btn-status" onclick="toggleStatus(this)">Marquer postulé</button>
+    </div>
+  </div>
+
+  <div class="card cat-prestige" data-cat="prestige" data-status="open">
+    <div class="card-top">
+      <span class="cat-tag">KAM / Compte Clé</span>
+      <span class="compat"><span class="stars">★★★☆☆</span></span>
+    </div>
+    <h3>Responsable KAM Restauration Commerciale – Foodservice H/F</h3>
+    <div class="company">Groupe Bel (La Vache qui rit…) · France · CDI</div>
+    <div class="tags">
+      <span class="tag">Foodservice / Restauration</span>
+      <span class="tag">Grands comptes chaînes</span>
+      <span class="tag warn" style="color:#92400e;background:#fffbeb;">5 ans exp. requis</span>
+      <span class="tag kedge">Bac+5 exigé</span>
+    </div>
+    <div class="match warn">⚡ Poste senior (5 ans requis en agro BtoB) — Lucas est à ~4 ans. À postuler avec un pitch fort ou à mettre en radar pour 12 mois. Groupe Bel = employeur de référence (La Vache qui rit, Babybel, Kiri). Foodservice = circuits CHR/RHD, compétence transposable depuis le CHD spirits. Bonne cible de progression.</div>
+    <div class="actions">
+      <a class="btn-apply" href="https://www.wizbii.com/company/groupe-bel/job/responsable-kam-restauration-commerciale-foodservice-bel-france-h-f" target="_blank" rel="noopener">Voir sur Wizbii →</a>
+      <button class="btn-status" onclick="toggleStatus(this)">Marquer postulé</button>
+    </div>
+  </div>
+
+  <!-- ===== BUSINESS DEV / ACCOUNT ===== -->
+
+  <div class="card cat-account is-new" data-cat="account" data-status="open">
+    <div class="card-top">
+      <span class="cat-tag">Business Developer</span>
+      <span class="compat"><span class="stars">★★★★☆</span></span>
+    </div>
+    <h3>Business Developer Vins &amp; Spiritueux – France / Europe F/H</h3>
+    <div class="company">Wine Services · Bordeaux (Quai de Bacalan, 33300) · CDI</div>
+    <div class="tags">
+      <span class="tag hot">Bordeaux ✓</span>
+      <span class="tag">Data / SaaS viti-vinicole</span>
+      <span class="tag salary">42–62k€ + variable</span>
+      <span class="tag">BtoB, déplacements France &amp; EU</span>
+    </div>
+    <div class="match">✅ Poste de chasseur commercial BtoB pour une plateforme data dédiée aux propriétés viticoles et maisons de spiritueux. Siège Bordeaux Quai de Bacalan. Exp. 5 ans préconisée — Lucas peut tenter avec un bon pitch sur sa connaissance terrain du secteur. Connaissance vins/spiritueux = avantage concurrentiel fort.</div>
+    <div class="actions">
+      <a class="btn-apply" href="https://www.welcometothejungle.com/fr/companies/wine-services/jobs/business-developpeur-f-h_bordeaux_WS_Vzz4OJ9" target="_blank" rel="noopener">Voir sur WTTJ →</a>
+      <button class="btn-status" onclick="toggleStatus(this)">Marquer postulé</button>
+    </div>
+  </div>
+
+  <div class="card cat-account" data-cat="account" data-status="open">
+    <div class="card-top">
+      <span class="cat-tag">KAM Food Service</span>
+      <span class="compat"><span class="stars">★★★★☆</span></span>
+    </div>
+    <h3>Key Account Manager Food Service H/F</h3>
+    <div class="company">MFS France (produits italiens) · Avignon / Home Office · CDI</div>
+    <div class="tags">
+      <span class="tag hot">Offre directe entreprise</span>
+      <span class="tag">RHD / RHF / IAA</span>
+      <span class="tag">Produits italiens premium</span>
+      <span class="tag salary">Package : fixe + prime + VF</span>
+    </div>
+    <div class="match">✅ MFS France distribue des produits alimentaires italiens haut de gamme sur les circuits RHD (restauration hors domicile), RHF (restauration hors foyer) et IAA. Base Avignon ou home office — déplacements nationaux. Profil CHD Pernod Ricard très transposable sur circuits CHR/food service. Véhicule de fonction inclus.</div>
+    <div class="actions">
+      <a class="btn-apply" href="https://mfsfrance.com/key-account-manager/" target="_blank" rel="noopener">Voir l'offre MFS →</a>
+      <button class="btn-status" onclick="toggleStatus(this)">Marquer postulé</button>
+    </div>
+  </div>
+
+  <!-- ===== CABINETS SPÉCIALISÉS ===== -->
+
+  <div class="card cat-cabinet" data-cat="cabinet" data-status="open">
+    <div class="card-top">
+      <span class="cat-tag">Cabinet spécialisé</span>
+      <span class="compat"><span class="stars">★★★★★</span></span>
+    </div>
+    <h3>Elzéar Wine &amp; Spirit – Mandats KAM &amp; Comptes Clés</h3>
+    <div class="company">Elzéar Wine &amp; Spirit · Bordeaux · Cabinet 100% vins &amp; spiritueux</div>
+    <div class="tags">
+      <span class="tag hot">Priorité absolue</span>
+      <span class="tag">KAM, Comptes Clés, Biz Dev</span>
+      <span class="tag">Mandats non publiés</span>
+      <span class="tag">Bordeaux &amp; France</span>
+    </div>
+    <div class="match">✅ Cabinet 100% spécialisé vins &amp; spiritueux — placent régulièrement des profils KAM, Compte Clé et Biz Dev sur des mandats confidentiels. Envoyer CV spontané en mentionnant explicitement la cible KAM/Compte Clé (pas chef de secteur) et l'ouverture tous secteurs FMCG.</div>
+    <div class="actions">
+      <a class="btn-apply" href="https://www.elzear-wine.com/fr/cabinet-recrutement-bordeaux/" target="_blank" rel="noopener">Contacter Elzéar →</a>
+      <button class="btn-status" onclick="toggleStatus(this)">Marquer contacté</button>
+    </div>
+  </div>
+
+  <div class="card cat-cabinet" data-cat="cabinet" data-status="open">
+    <div class="card-top">
+      <span class="cat-tag">Cabinet spécialisé</span>
+      <span class="compat"><span class="stars">★★★★☆</span></span>
+    </div>
+    <h3>Vidal Associates – Mandats KAM Commerciaux</h3>
+    <div class="company">Vidal Associates Consulting &amp; Search · National · Mandats cadres commerciaux</div>
+    <div class="tags">
+      <span class="tag hot">Mandats actifs</span>
+      <span class="tag">KAM, Compte Clé</span>
+      <span class="tag">Agroalimentaire &amp; FMCG</span>
+      <span class="tag">Nouvelle-Aquitaine &amp; France</span>
+    </div>
+    <div class="match">✅ Vidal Associates place des profils KAM et Compte Clé dans l'agroalimentaire, le FMCG et la grande conso — pas uniquement vins &amp; spiritueux. Contacter en précisant : cible KAM/Compte Clé, exp. GMS/CHD, ouvert tout secteur FMCG, base Bordeaux/télétravail.</div>
+    <div class="actions">
+      <a class="btn-apply" href="https://www.vidalassociates.com/nos-offres-d-emploi/" target="_blank" rel="noopener">Voir offres Vidal Associates →</a>
+      <button class="btn-status" onclick="toggleStatus(this)">Marquer contacté</button>
+    </div>
+  </div>
+
+  <div class="card cat-cabinet" data-cat="cabinet" data-status="open">
+    <div class="card-top">
+      <span class="cat-tag">Cabinet spécialisé</span>
+      <span class="compat"><span class="stars">★★★★☆</span></span>
+    </div>
+    <h3>Fed Business – Division KAM &amp; Grands Comptes FMCG</h3>
+    <div class="company">Fed Business · Bordeaux &amp; France · Mandats KAM, Compte Clé, Biz Dev</div>
+    <div class="tags">
+      <span class="tag">Bordeaux</span>
+      <span class="tag">KAM / Comptes Clés FMCG</span>
+      <span class="tag salary">45–65k€ typiques</span>
+      <span class="tag">Tous secteurs grande conso</span>
+    </div>
+    <div class="match">✅ Fed Business mandate régulièrement sur des postes KAM / Compte Clé dans l'agroalimentaire, la beauté, la grande consommation — sur Bordeaux et France entière. Envoyer le CV spontané en ciblant clairement KAM / Compte Clé tous secteurs FMCG.</div>
+    <div class="actions">
+      <a class="btn-apply" href="https://www.fed-business.fr/nos-offres/" target="_blank" rel="noopener">Voir Fed Business →</a>
+      <button class="btn-status" onclick="toggleStatus(this)">Marquer contacté</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Veille mise à jour le 14 juillet 2026 · Profil : Lucas Baudoux · KAM / Compte Clé tous secteurs FMCG · KEDGE Master Vins &amp; Spiritueux<br>
+  Sources : WTTJ, Michael Page, Wizbii, sites entreprises · <strong>Chef de secteur GMS exclu</strong> · Relancer : <strong>refresh la veille de Baudouc</strong>
+</footer>
+
+<script>
+  document.querySelectorAll('.ftab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const f = btn.dataset.filter;
+      document.querySelectorAll('.card').forEach(card => {
+        const cat = card.dataset.cat;
+        const status = card.dataset.status;
+        if (f === 'all') card.classList.remove('hidden');
+        else if (f === 'postule') card.classList.toggle('hidden', status !== 'postule');
+        else if (f === 'non') card.classList.toggle('hidden', status !== 'non');
+        else card.classList.toggle('hidden', cat !== f);
+      });
+    });
+  });
+
+  function toggleStatus(btn) {
+    const card = btn.closest('.card');
+    const cur = card.dataset.status;
+    if (cur === 'open') {
+      card.dataset.status = 'postule';
+      btn.textContent = '✓ Postulé';
+    } else if (cur === 'postule') {
+      card.dataset.status = 'non';
+      btn.textContent = '✗ Non pertinent';
+    } else {
+      card.dataset.status = 'open';
+      btn.textContent = 'Marquer postulé';
+    }
+  }
+</script>
+</body>
+</html>
